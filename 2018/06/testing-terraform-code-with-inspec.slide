@@ -1,0 +1,237 @@
+InSpec を使って Terraform で作ったインフラをテストする
+Japan HashiCorp User Group LT
+14 Jun 2018
+
+Takaaki Furukawa
+Technical Account Manager, Rakuten, Inc.
+
+: Presenter notes
+
+* About me
+
+.image images/tkak.png 200 _
+
+- Technical Account Manager at Rakuten, Inc.
+- @tkak (Twitter/GitHub)
+- Terraform 歴: ３年とちょっと
+- Terraform プラグインの開発, ConoHa (deprecated), VMware vSphere, オンプレミスIaaS
+
+: Presenter notes
+
+* Terraform は便利だけど、一歩間違うと大惨事
+
+- Terraform のバージョンが上がったとき
+- Terraform モジュールを作るとき
+- Terraform プラグインを開発するとき
+- 何か変更を加えるとき
+
+: Presenter notes
+: Terraform は便利なんだけど、一歩間違うとサービスへ影響を与えてしまいます
+
+* 事前の検証やテストは大事 🔍
+
+- 動作確認のために、ダッシュボードからぽちぽちしたくない
+- テストは自動化したい、CIしたい
+
+* InSpec を使って Terraform で作ったインフラをテストする
+
+* InSpec? 🤔
+
+: Presenter notes
+
+* そもそもInSpecとは何か
+
+- Chef社が開発しているオープンソースのインフラテストツール
+- コンプライアンスやセキュリティ要件のチェック
+- テストコードを元に、システムの実際の状態(設定内容やプロセスが起動しているかなど)をテストする
+- Ruby で開発されている
+
+* 例えば
+
+- nginx パッケージ (version 1.13.9) がインストールされているかどうか
+- nginx サービスが、自動起動有効で、かつ起動しているか
+
+.code example/nginx_test.rb
+
+* 実行方法
+
+inspecコマンド
+
+  $ inspec exec example/nginx_test.rb -t ssh://user:pass@host:port
+  Profile: tests from example/nginx_test.rb (tests from example.nginx_test.rb)
+  Version: (not specified)
+  Target:  ssh://user:pass@host:port
+
+    System Package nginx
+       ✔  should be installed
+       ✔  version should eq "1.13.9"
+    Service nginx
+       ✔  should be enabled
+       ✔  should be running
+
+  Test Summary: 4 successful, 0 failures, 0 skipped
+
+* vs. Serverspec
+
+Serverspec
+
+- RSpecをベースとしたサーバテストフレームワーク
+- RubyやRSpecと組み合わせて使いやすい
+
+InSpec
+
+- Rubyに詳しくない人でも使えるように、という思想で作られている
+- Rakefileやspec_helper.rbを用意しなくても使える
+- Serverspecにインスパイアされて作られたツール
+
+
+_"InSpec_ _is_ _inspired_ _by_ _the_ _wonderful_ _Serverspec_ _project_
+_Kudos_ _to_ _mizzy_ _and_ _all_ _contributors!"_
+-- GitHub inspec/inspec
+
+* 今年２月 InSpec 2.0 がリリース 🎉
+
+* What's New in InSpec 2.0
+
+Cloud platform をサポート
+
+- Azure
+- AWS
+
+各Cloudサービスの API を使ってインフラリソースの状態を確認する
+
+* 例: AWS
+
+.code example/aws_test.rb
+
+* 例: Azure
+
+.code example/azure_test.rb
+
+* まずは Azure で試してみる 👽
+
+* Azure の Terraform チュートリアル
+
+VPCやSecurity Groupなどを作った後、VMを１台作るシナリオ
+
+.link https://docs.microsoft.com/en-us/azure/virtual-machines/linux/terraform-create-complete-vm Create a complete Linux virtual machine infrastructure in Azure with Terraform
+
+- main.tf ファイルを書く
+- terraform init & terraform apply の実行
+- inspec のテストコードを書く
+- inspec exec の実行
+
+* terraform graph
+
+.image azure/graph.svg 550 _
+
+* main.tf (1)
+
+.code azure/main.tf /^# Create Network/,/^  #/
+
+* main.tf (2)
+
+.code azure/main.tf /^# Create virtual machine/,/^  #/
+
+* main.tf (3)
+
+.code azure/main.tf /^  # ===/,/^}/
+
+* terraform init
+
+  $ terraform init
+
+  Initializing provider plugins...
+  - Checking for available provider plugins on https://releases.hashicorp.com...
+  - Downloading plugin for provider "random" (1.3.1)...
+  - Downloading plugin for provider "azurerm" (1.6.0)...
+
+  ...
+
+  Terraform has been successfully initialized!
+
+  You may now begin working with Terraform. Try running "terraform plan" to see
+  any changes that are required for your infrastructure. All Terraform commands
+  should now work.
+
+  If you ever set or change modules or backend configuration for Terraform,
+  rerun this command to reinitialize your working directory. If you forget, other
+  commands will detect it and remind you to do so if necessary.
+
+* terraform apply
+
+.code azure/terraform_apply.log
+
+* InSpec の Profileを作る
+
+.code azure/test/verify/controls/example.rb
+
+* InSpec 実行
+
+.code azure/inspec_exec.log
+
+* 所感
+
+- テスト書くのが結構大変 😱
+
+- Azure Resource Exporter を見ながらひたすら `azure_generic_resource` を書くという作業
+
+.link https://resources.azure.com/
+
+* inspec-iggy 🚀
+
+* inspec-iggy
+
+"InSpec plugin for generating compliance controls from Terraform"
+
+- Terraform `tfstate` ファイルから InSpec の profile を自動生成してくれるツール
+- InSpec-Iggy (InSpec Generate -> "IG" -> "Iggy")
+
+* Install
+
+  $ gem install inspec
+  $ gem install inspec-iggy
+  $ inspec terraform version
+
+* 実行結果
+
+.code azure/inspec_terraform.log
+
+* 実行結果
+
+.code azure/inspec_terraform.log
+
+titleしか出ない・・・！😭
+
+どうやら Azure はまだ対応してないっぽい
+
+* ちなみに AWS で試してみると...
+
+* 実行結果
+
+.code aws/inspec_terraform.log
+
+* 実行結果
+
+.code aws/inspec_terraform.log
+
+ちゃんとテストが生成される！
+
+* Test の実行結果
+
+.code aws/inspec_exec.log
+
+* Test の実行結果
+
+.code aws/inspec_exec.log
+
+AWS 😎
+
+* まとめ
+
+- Terraform で作ったインフラを InSpec でテストできる
+- InSpec 2.0 から AWS と Azure をサポート (AWS の方が使えるリソースが多い)
+- inspec-iggy は Terraform `tfstate` ファイルから profile を自動生成できる
+- ただし、Azure はまだちゃんと動かない
+- 他の Cloud Platform はまだサポートされてないので、contributeするチャンス💪
+

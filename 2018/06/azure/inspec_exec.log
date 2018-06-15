@@ -1,0 +1,19 @@
+$ inspec exec test/verify -t azure://
+
+Profile: InSpec Profile (test/verify)
+Version: 0.1.0
+Target:  azure://88a0728d-76e8-4462-877c-d162592a7ea0
+
+  azure_generic_resource
+     ✔  properties.securityRules.count should eq 1
+  azure_virtual_machine
+     ✔  should have managed osdisk
+     ✔  should have nics
+     ✔  should have ssh keys
+     ✔  location should eq "eastus"
+     ✔  os_type should eq "Linux"
+     ✔  vm_size should eq "Standard_DS1_v2"
+     ✔  password_authentication? should equal false
+     ✔  environment_tag should include "Terraform Demo"
+
+Test Summary: 9 successful, 0 failures, 0 skipped

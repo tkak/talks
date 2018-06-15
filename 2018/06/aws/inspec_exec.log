@@ -1,0 +1,16 @@
+$ inspec exec test/verify -t aws://
+
+Profile: InSpec Profile (test/verify)
+Version: 0.1.0
+Target:  aws://us-east-1
+
+  ✔  aws_ec2_instance::i-0dd21e96045039988: Iggy terraform.tfstate aws_ec2_instance::i-0dd21e96045039988
+     ✔  EC2 Instance i-0dd21e96045039988 should exist
+     ✔  EC2 Instance i-0dd21e96045039988 id should cmp == "i-0dd21e96045039988"
+     ✔  EC2 Instance i-0dd21e96045039988 instance_type should cmp == "t2.micro"
+     ✔  EC2 Instance i-0dd21e96045039988 key_name should cmp == "ec2-user"
+     ✔  EC2 Instance i-0dd21e96045039988 subnet_id should cmp == "subnet-dacb17f4"
+
+
+Profile Summary: 1 successful control, 0 control failures, 0 controls skipped
+Test Summary: 5 successful, 0 failures, 0 skipped
